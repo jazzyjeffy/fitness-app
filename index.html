@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Training">
+<meta name="theme-color" content="#0C447C">
+<title>Mijn Training</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f5;
+    --bg3: #eeeeee;
+    --text: #111111;
+    --text2: #555555;
+    --text3: #999999;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --blue: #0C447C;
+    --blue-light: #E6F1FB;
+    --blue-mid: #378ADD;
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #085041;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121212;
+      --bg2: #1e1e1e;
+      --bg3: #2a2a2a;
+      --text: #f0f0f0;
+      --text2: #aaaaaa;
+      --text3: #666666;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.2);
+      --blue-light: #0a2540;
+      --green-light: #0a2e22;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); max-width: 480px; margin: 0 auto; min-height: 100vh; }
+  .header { padding: env(safe-area-inset-top, 12px) 16px 12px; background: var(--bg); border-bottom: 0.5px solid var(--border); position: sticky; top: 0; z-index: 10; }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .app-title { font-size: 20px; font-weight: 600; color: var(--text); }
+  .date-lbl { font-size: 12px; color: var(--text3); }
+  .day-tabs { display: flex; gap: 5px; }
+  .day-tab { flex: 1; padding: 8px 2px; border-radius: var(--radius); border: 0.5px solid var(--border); background: var(--bg); cursor: pointer; font-size: 12px; color: var(--text2); text-align: center; font-family: inherit; transition: all 0.15s; }
+  .day-tab.active { background: var(--blue); border-color: var(--blue); color: white; font-weight: 600; }
+  .day-tab.training { border-color: var(--blue-mid); color: var(--blue); }
+  .day-tab.active.training { color: white; }
+  .prog-wrap { padding: 12px 16px 4px; }
+  .prog-top { display: flex; justify-content: space-between; font-size: 12px; color: var(--text3); margin-bottom: 5px; }
+  .prog-bar { height: 4px; background: var(--bg3); border-radius: 2px; }
+  .prog-fill { height: 4px; background: var(--green); border-radius: 2px; transition: width 0.4s ease; }
+  .ex-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+  .ex-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; transition: border-color 0.2s; }
+  .ex-card.done { border-color: var(--green); }
+  .ex-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer; user-select: none; }
+  .ex-thumb { width: 54px; height: 54px; flex-shrink: 0; border-radius: var(--radius); background: var(--bg2); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .ex-thumb svg { width: 50px; height: 50px; }
+  .ex-info { flex: 1; min-width: 0; }
+  .ex-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .ex-meta { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .ex-bench { font-size: 11px; color: var(--blue-mid); margin-top: 3px; }
+  .ex-done { font-size: 11px; color: var(--green); margin-top: 3px; font-weight: 500; }
+  .chev { font-size: 18px; color: var(--text3); transition: transform 0.2s; flex-shrink: 0; }
+  .chev.open { transform: rotate(180deg); }
+  .ex-body { border-top: 0.5px solid var(--border); padding: 14px; display: none; }
+  .ex-body.open { display: block; }
+  .ex-visual { width: 100%; height: 120px; background: var(--bg2); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+  .ex-visual svg { width: 210px; height: 105px; }
+  .instr { font-size: 13px; color: var(--text2); line-height: 1.65; margin-bottom: 12px; padding: 10px 12px; background: var(--bg2); border-radius: var(--radius); }
+  .sets-hdr { display: grid; grid-template-columns: 26px 1fr 1fr 36px; gap: 6px; margin-bottom: 5px; }
+  .sets-hdr span { font-size: 10px; color: var(--text3); text-align: center; text-transform: uppercase; letter-spacing: 0.05em; }
+  .set-row { display: grid; grid-template-columns: 26px 1fr 1fr 36px; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .set-num { font-size: 13px; color: var(--text3); text-align: center; font-weight: 500; }
+  .s-input { padding: 8px 6px; font-size: 14px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); width: 100%; text-align: center; font-family: inherit; -webkit-appearance: none; }
+  .s-input::placeholder { color: var(--text3); }
+  .s-input:focus { outline: none; border-color: var(--blue-mid); }
+  .s-input.filled { border-color: var(--blue-mid); background: var(--blue-light); }
+  .s-check { width: 36px; height: 36px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.15s; }
+  .s-check.on { background: var(--green-light); border-color: var(--green); color: var(--green-dark); }
+  .hist-block { margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--border); }
+  .hist-lbl { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+  .hist-row { font-size: 12px; color: var(--text2); padding: 4px 0; border-bottom: 0.5px solid var(--border); display: flex; justify-content: space-between; }
+  .hist-row:last-child { border-bottom: none; }
+  .hist-done { color: var(--green); font-size: 11px; }
+  .rest-day { padding: 60px 16px; text-align: center; color: var(--text3); }
+  .rest-icon { font-size: 48px; margin-bottom: 12px; }
+  .rest-title { font-size: 18px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+  .rest-sub { font-size: 14px; line-height: 1.6; }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <span class="app-title">💪 Mijn training</span>
+    <span class="date-lbl" id="dlbl"></span>
+  </div>
+  <div class="day-tabs" id="dtabs"></div>
+</div>
+
+<div class="prog-wrap" id="pwrap" style="display:none">
+  <div class="prog-top"><span id="ptyp" style="font-weight:500;color:var(--text2)"></span><span id="ppct"></span></div>
+  <div class="prog-bar"><div class="prog-fill" id="pfill" style="width:0%"></div></div>
+</div>
+
+<div id="main"></div>
+
+<script>
+const DAGEN=[
+  {k:"Ma",t:true,type:"Dag 1 – Push/Pull horizontaal",sk:0},
+  {k:"Di",t:false},
+  {k:"Wo",t:true,type:"Dag 2 – Benen",sk:2},
+  {k:"Do",t:false},
+  {k:"Vr",t:false},
+  {k:"Za",t:true,type:"Dag 3 – Push/Pull verticaal",sk:5},
+  {k:"Zo",t:false}
+];
+
+const SCHEMA={
+0:[
+{n:"Flat dumbbell press",sets:3,reps:"6–10",mat:"Dumbbells + bank",
+instr:"Ga op een vlakke bank liggen. Houd een dumbbell in elke hand ter hoogte van je borst, ellebogen ±45°. Duw beide gewichten omhoog tot je armen gestrekt zijn. Laat gecontroleerd zakken en voel de rek in je borst.",
+svg:`<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><rect x="40" y="55" width="120" height="14" rx="5" fill="#B5D4F4"/><rect x="30" y="57" width="14" height="10" rx="3" fill="#185FA5"/><rect x="156" y="57" width="14" height="10" rx="3" fill="#185FA5"/><rect x="20" y="59" width="12" height="6" rx="2" fill="#0C447C"/><rect x="168" y="59" width="12" height="6" rx="2" fill="#0C447C"/><ellipse cx="100" cy="44" rx="13" ry="13" fill="#E6F1FB" stroke="#378ADD" stroke-width="2"/><ellipse cx="100" cy="42" rx="5" ry="4" fill="#B5D4F4"/><line x1="88" y1="50" x2="68" y2="58" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><line x1="112" y1="50" x2="132" y2="58" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><rect x="52" y="55" width="22" height="6" rx="3" fill="#378ADD" opacity="0.7"/><rect x="126" y="55" width="22" height="6" rx="3" fill="#378ADD" opacity="0.7"/><text x="100" y="92" text-anchor="middle" font-size="9" fill="#185FA5" font-family="sans-serif">Flat dumbbell press</text></svg>`},
+{n:"Incline DB row",sets:3,reps:"6–10",mat:"Dumbbells + schuine bank",
+instr:"Leg je borst op een schuin afgestelde bank (±45°). Laat de dumbbells vrij hangen. Trek ze omhoog naar je heupen door je elleboog naar achter te sturen. Knijp je schouderbladen samen bovenaan de beweging.",
+svg:`<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="35" width="130" height="16" rx="5" transform="rotate(-18 20 35)" fill="#B5D4F4"/><rect x="15" y="62" width="14" height="28" rx="4" fill="#185FA5"/><ellipse cx="42" cy="30" rx="12" ry="12" fill="#E6F1FB" stroke="#378ADD" stroke-width="2"/><ellipse cx="42" cy="28" rx="5" ry="4" fill="#B5D4F4"/><line x1="42" y1="42" x2="38" y2="56" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><rect x="28" y="54" width="18" height="6" rx="3" fill="#378ADD"/><line x1="95" y1="52" x2="105" y2="68" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><rect x="97" y="66" width="18" height="6" rx="3" fill="#378ADD"/><text x="100" y="93" text-anchor="middle" font-size="9" fill="#185FA5" font-family="sans-serif">Incline DB row</text></svg>`},
+{n:"Pec deck chest fly",sets:3,reps:"10–15",mat:"Pec deck machine",
+instr:"Zit rechtop in de pec deck machine. Leg je onderarmen plat tegen de verticale pads. Breng beide armen in een boogbeweging naar elkaar toe voor je borst. Houd je rug plat tegen de rugleuning en je schouders omlaag.",
+svg:`<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><rect x="88" y="8" width="24" height="70" rx="6" fill="#B5D4F4"/><rect x="85" y="8" width="30" height="8" rx="4" fill="#185FA5"/><rect x="85" y="70" width="30" height="8" rx="4" fill="#185FA5"/><rect x="20" y="28" width="62" height="12" rx="5" fill="#378ADD"/><rect x="118" y="28" width="62" height="12" rx="5" fill="#378ADD"/><rect x="14" y="30" width="10" height="8" rx="3" fill="#0C447C"/><rect x="176" y="30" width="10" height="8" rx="3" fill="#0C447C"/><ellipse cx="100" cy="26" rx="13" ry="13" fill="#E6F1FB" stroke="#378ADD" stroke-width="2"/><ellipse cx="100" cy="24" rx="5" ry="4" fill="#B5D4F4"/><line x1="88" y1="32" x2="74" y2="36" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><line x1="112" y1="32" x2="126" y2="36" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><line x1="100" y1="39" x2="100" y2="70" stroke="#0C447C" stroke-width="2.5" stroke-linecap="round"/><text x="100" y="92" text-anchor="middle" font-size="9" fill="#185FA5" font-family="sans-serif">Pec deck chest fly</text></svg>`},
+{n:"Reverse pec deck",sets:3,reps:"10–15",mat:"Pec deck machine (omgekeerd)",
+instr:"Zit omgekeerd op de machine — gezicht naar de rugleuning. Grijp de handvatten voor je. Spreid je armen zijwaarts uit door je schouderbladen bewust samen te knijpen. Houd je armen licht gebogen en laat langzaam terug.",
+svg:`<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><rect x="88" y="8" width="24" height="70" rx="6" fill="#9FE1CB"/><rect x="85" y="8" width="30" height="8" rx="4" fill="#0F6E56"/><rect x="85" y="70" width="30" height="8" rx="4" fill="#0F6E56"/><rect x="20" y="38" width="62" height="10" rx="5" fill="#1D9E75"/><rect x="118" y="38" width="62" height="10" rx="5" fill="#1D9E75"/><rect x="14" y="39" width="10" height="8" rx="3" fill="#085041"/><rect x="176" y="39" width="10" height="8" rx="3" fill="#085041"/><ellipse cx="100" cy="26" rx="13" ry="13" fill="#E1F5EE" stroke="#1D9E75" stroke-width="2"/><ellipse cx="100" cy="24" rx="5" ry="4" fill="#9FE1CB"/><line x1="88" y1="34" x2="72" y2="42" stroke="#085041" stroke-width="3" stroke-linecap="round"/><line x1="112" y1="34" x2="128" y2="42" stroke="#085041" stroke-width="3" stroke-linecap="round"/><line x1="100" y1="39" x2="100" y2="70" stroke="#085041" stroke-width="2.5" stroke-linecap="round"/><text x="100" y="92" text-anchor="middle" font-size="9" fill="#085041" font-family="sans-serif">Reverse pec deck</text></svg>`},
+{n:"DB curl",sets:3,reps:"10–15",mat:"Dumbbells",
+instr:"Sta rechtop, een dumbbell in elke hand, handpalmen naar voren. Krul de gewichten op naar je schouders — beweeg alleen je onderarm. Houd je bovenarmen strak langs je lichaam. Laat gecontroleerd zakken tot je arm gestrekt is.",
+svg:`<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><ellipse cx="100" cy="18" rx="13" ry="13" fill="#E6F1FB" stroke="#378ADD" stroke-width="2"/><ellipse cx="100" cy="16" rx="5" ry="4" fill="#B5D4F4"/><line x1="100" y1="31" x2="100" y2="52" stroke="#0C447C" stroke-width="3.5" stroke-linecap="round"/><path d="M100 52 Q80 62 76 78" stroke="#0C447C" stroke-width="3.5" stroke-linecap="round" fill="none"/><rect x="62" y="74" width="26" height="8" rx="4" fill="#185FA5"/><rect x="56" y="75" width="10" height="6" rx="2" fill="#0C447C"/><rect x="80" y="75" width="10" height="6" rx="2" fill="#0C447C"/><line x1="100" y1="52" x2="124" y2="76" stroke="#378ADD" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 3"/><rect x="116" y="72" width="20" height="7" rx="3.5" fill="#B5D4F4"/><text x="100" y="96" text-anchor="middle" font-size="9" fill="#185FA5" font-family="sans-serif">DB curl</text></svg>`}
+],
+2:[
+{n:"Leg press",sets:3,reps:"6–10",mat:"Leg press machine",
+instr:"Zit in de machine, voeten schouderbreedte op het platform. Duw het platform weg door je knieën te strekken — stop net voor volledige extensie. Laat langzaam terug zakken tot ±90° kniehoek. Houd je rug plat tegen de rugleuning.",
+svg:`<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="50" width="80" height="36" rx="6" fill="#B5D4F4"/><rect x="10" y="50" width="80" height="12" rx="6" fill="#185FA5"/><ellipse cx="34" cy="36" rx="12" ry="12" fill="#E6F1FB" stroke="#378ADD" stroke-width="2"/><ellipse cx="34" cy="34" rx="5" ry="4" fill="#B5D4F4"/><line x1="34" y1="48" x2="34" y2="56" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><rect x="95" y="20" width="95" height="60" rx="6" fill="#9FE1CB" opacity="0.4"/><rect x="95" y="20" width="95" height="10" rx="5" fill="#1D9E75" opacity="0.6"/><line x1="90" y1="55" x2="130" y2="30" stroke="#0C447C" stroke-width="3.5" stroke-linecap="round"/><line x1="90" y1="55" x2="90" y2="80" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><rect x="126" y="22" width="30" height="10" rx="5" fill="#185FA5"/><rect x="118" y="24" width="10" height="6" rx="2" fill="#0C447C"/><rect x="154" y="24" width="10" height="6" rx="2" fill="#0C447C"/><text x="100" y="97" text-anchor="middle" font-size="9" fill="#085041" font-family="sans-serif">Leg press</text></svg>`},
+{n:"Seated leg curl",sets:3,reps:"10–15",mat:"Leg curl machine (zittend)",
+instr:"Zit in de machine. Leg het bovenste kussen op je bovenbenen en het onderste kussen op je onderbenen. Trek je hielen naar je billen door je knieën te buigen. Houd even vast en laat gecontroleerd terug strekken.",
+svg:`<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="45" width="75" height="40" rx="6" fill="#9FE1CB"/><rect x="10" y="45" width="75" height="12" rx="6" fill="#0F6E56"/><ellipse cx="34" cy="32" rx="12" ry="12" fill="#E1F5EE" stroke="#1D9E75" stroke-width="2"/><ellipse cx="34" cy="30" rx="5" ry="4" fill="#9FE1CB"/><line x1="34" y1="44" x2="34" y2="52" stroke="#085041" stroke-width="3" stroke-linecap="round"/><line x1="34" y1="57" x2="80" y2="57" stroke="#085041" stroke-width="3.5" stroke-linecap="round"/><rect x="76" y="53" width="16" height="8" rx="4" fill="#1D9E75"/><path d="M120 57 Q150 55 165 38" stroke="#085041" stroke-width="3.5" stroke-linecap="round" fill="none"/><rect x="158" y="28" width="20" height="8" rx="4" fill="#1D9E75"/><rect x="155" y="30" width="8" height="5" rx="2" fill="#085041"/><rect x="176" y="30" width="8" height="5" rx="2" fill="#085041"/><text x="100" y="95" text-anchor="middle" font-size="9" fill="#085041" font-family="sans-serif">Seated leg curl</text></svg>`},
+{n:"Leg extension",sets:3,reps:"10–15",mat:"Leg extension machine",
+instr:"Zit rechtop in de machine. Leg het kussen op je scheenbenen vlak boven de enkels. Strek je benen omhoog tot ze bijna volledig gestrekt zijn. Houd even vast bovenaan. Laat gecontroleerd zakken — niet laten vallen.",
+svg:`<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="42" width="75" height="42" rx="6" fill="#B5D4F4"/><rect x="10" y="42" width="75" height="12" rx="6" fill="#185FA5"/><ellipse cx="34" cy="28" rx="12" ry="12" fill="#E6F1FB" stroke="#378ADD" stroke-width="2"/><ellipse cx="34" cy="26" rx="5" ry="4" fill="#B5D4F4"/><line x1="34" y1="40" x2="34" y2="50" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><line x1="34" y1="54" x2="80" y2="54" stroke="#0C447C" stroke-width="3.5" stroke-linecap="round"/><rect x="76" y="50" width="16" height="8" rx="4" fill="#378ADD"/><path d="M120 54 Q150 56 168 74" stroke="#0C447C" stroke-width="3.5" stroke-linecap="round" fill="none"/><rect x="160" y="70" width="22" height="8" rx="4" fill="#378ADD"/><rect x="157" y="72" width="8" height="5" rx="2" fill="#0C447C"/><rect x="178" y="72" width="8" height="5" rx="2" fill="#0C447C"/><text x="100" y="96" text-anchor="middle" font-size="9" fill="#185FA5" font-family="sans-serif">Leg extension</text></svg>`},
+{n:"Standing calf raise",sets:3,reps:"10–15",mat:"Calf raise machine of step",
+instr:"Sta op de rand van een step of calf raise machine, hiel vrij in de lucht. Zak je hielen langzaam omlaag. Duw dan zo hoog mogelijk omhoog op je tenen. Houd even vast bovenaan. Voer langzaam uit voor maximaal effect.",
+svg:`<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><rect x="50" y="72" width="100" height="10" rx="4" fill="#B5D4F4"/><rect x="40" y="80" width="120" height="6" rx="3" fill="#185FA5"/><ellipse cx="100" cy="20" rx="13" ry="13" fill="#E6F1FB" stroke="#378ADD" stroke-width="2"/><ellipse cx="100" cy="18" rx="5" ry="4" fill="#B5D4F4"/><line x1="100" y1="33" x2="100" y2="55" stroke="#0C447C" stroke-width="3.5" stroke-linecap="round"/><line x1="100" y1="55" x2="88" y2="72" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><line x1="100" y1="55" x2="112" y2="72" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><ellipse cx="88" cy="73" rx="8" ry="4" fill="#378ADD" opacity="0.8"/><ellipse cx="112" cy="73" rx="8" ry="4" fill="#378ADD" opacity="0.8"/><text x="100" y="97" text-anchor="middle" font-size="9" fill="#185FA5" font-family="sans-serif">Standing calf raise</text></svg>`},
+{n:"Hyperextension",sets:3,reps:"10–15",mat:"Rugextension bank",
+instr:"Stap in de machine, heupen rusten op het grote kussen, voeten vastgeklemd. Laat je bovenlichaam gecontroleerd omlaag zakken. Kom omhoog tot je lichaam een rechte lijn vormt — niet verder. Houd je rug recht, geen overextensie.",
+svg:`<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="52" width="180" height="16" rx="6" fill="#9FE1CB"/><rect x="10" y="52" width="180" height="7" rx="4" fill="#0F6E56" opacity="0.5"/><rect x="55" y="40" width="30" height="16" rx="5" fill="#1D9E75"/><rect x="130" y="38" width="20" height="16" rx="5" fill="#0F6E56"/><ellipse cx="162" cy="36" rx="12" ry="12" fill="#E1F5EE" stroke="#1D9E75" stroke-width="2"/><ellipse cx="162" cy="34" rx="5" ry="4" fill="#9FE1CB"/><line x1="152" y1="42" x2="132" y2="48" stroke="#085041" stroke-width="3" stroke-linecap="round"/><line x1="132" y1="48" x2="100" y2="50" stroke="#085041" stroke-width="3.5" stroke-linecap="round"/><line x1="100" y1="50" x2="62" y2="52" stroke="#085041" stroke-width="3.5" stroke-linecap="round"/><line x1="62" y1="52" x2="62" y2="68" stroke="#085041" stroke-width="3" stroke-linecap="round"/><text x="100" y="94" text-anchor="middle" font-size="9" fill="#085041" font-family="sans-serif">Hyperextension</text></svg>`}
+],
+5:[
+{n:"(Assisted) pull-up",sets:3,reps:"6–10",mat:"Pull-up machine of rekstok",
+instr:"Grijp de stang iets breder dan schouderbreedte, handpalmen naar voren. Trek je omhoog totdat je kin boven de stang komt. Stuur je ellebogen naar buiten en omlaag. Laat gecontroleerd zakken met volledig gestrekte armen.",
+svg:`<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="8" width="180" height="10" rx="5" fill="#185FA5"/><rect x="8" y="8" width="10" height="60" rx="3" fill="#B5D4F4"/><rect x="182" y="8" width="10" height="60" rx="3" fill="#B5D4F4"/><ellipse cx="100" cy="30" rx="13" ry="13" fill="#E6F1FB" stroke="#378ADD" stroke-width="2"/><ellipse cx="100" cy="28" rx="5" ry="4" fill="#B5D4F4"/><line x1="88" y1="18" x2="72" y2="18" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><line x1="112" y1="18" x2="128" y2="18" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><line x1="72" y1="18" x2="88" y2="28" stroke="#0C447C" stroke-width="2.5" stroke-linecap="round"/><line x1="128" y1="18" x2="112" y2="28" stroke="#0C447C" stroke-width="2.5" stroke-linecap="round"/><line x1="100" y1="43" x2="92" y2="68" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><line x1="100" y1="43" x2="108" y2="68" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><line x1="92" y1="55" x2="84" y2="78" stroke="#0C447C" stroke-width="2.5" stroke-linecap="round"/><line x1="108" y1="55" x2="116" y2="78" stroke="#0C447C" stroke-width="2.5" stroke-linecap="round"/><text x="100" y="95" text-anchor="middle" font-size="9" fill="#185FA5" font-family="sans-serif">(Assisted) pull-up</text></svg>`},
+{n:"Smith machine OHP",sets:3,reps:"6–10",mat:"Smith machine",
+instr:"Sta onder de stang, handen iets breder dan schouderbreedte. Stang rust op je bovenste borst/schouders. Druk omhoog boven je hoofd. Houd core gespannen. Laat gecontroleerd zakken naar schouderhoogte.",
+svg:`<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><rect x="12" y="5" width="8" height="88" rx="3" fill="#B5D4F4"/><rect x="180" y="5" width="8" height="88" rx="3" fill="#B5D4F4"/><rect x="20" y="28" width="160" height="8" rx="4" fill="#185FA5"/><rect x="12" y="26" width="18" height="12" rx="3" fill="#378ADD" opacity="0.7"/><rect x="170" y="26" width="18" height="12" rx="3" fill="#378ADD" opacity="0.7"/><ellipse cx="100" cy="52" rx="13" ry="13" fill="#E6F1FB" stroke="#378ADD" stroke-width="2"/><ellipse cx="100" cy="50" rx="5" ry="4" fill="#B5D4F4"/><line x1="88" y1="36" x2="80" y2="36" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><line x1="112" y1="36" x2="120" y2="36" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><line x1="80" y1="36" x2="88" y2="46" stroke="#0C447C" stroke-width="2.5" stroke-linecap="round"/><line x1="120" y1="36" x2="112" y2="46" stroke="#0C447C" stroke-width="2.5" stroke-linecap="round"/><line x1="100" y1="65" x2="92" y2="90" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><line x1="100" y1="65" x2="108" y2="90" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><text x="100" y="98" text-anchor="middle" font-size="9" fill="#185FA5" font-family="sans-serif">Smith machine OHP</text></svg>`},
+{n:"Straight arm pulldown",sets:3,reps:"10–15",mat:"Kabelstation",
+instr:"Sta voor het kabelstation, handen op de stang bovenaan. Houd je armen licht gebogen maar strak. Trek de stang omlaag in een boog naar je heupen door alleen in je schoudergewricht te bewegen. Laat gecontroleerd terug.",
+svg:`<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><rect x="158" y="5" width="30" height="90" rx="6" fill="#9FE1CB" opacity="0.5"/><rect x="158" y="5" width="30" height="8" rx="4" fill="#0F6E56"/><line x1="168" y1="22" x2="120" y2="22" stroke="#085041" stroke-width="2.5" stroke-linecap="round"/><rect x="108" y="18" width="16" height="8" rx="4" fill="#1D9E75"/><ellipse cx="80" cy="32" rx="13" ry="13" fill="#E1F5EE" stroke="#1D9E75" stroke-width="2"/><ellipse cx="80" cy="30" rx="5" ry="4" fill="#9FE1CB"/><line x1="92" y1="36" x2="112" y2="26" stroke="#085041" stroke-width="2.5" stroke-linecap="round"/><line x1="80" y1="45" x2="80" y2="60" stroke="#085041" stroke-width="3" stroke-linecap="round"/><line x1="72" y1="38" x2="50" y2="68" stroke="#085041" stroke-width="2.5" stroke-linecap="round"/><line x1="88" y1="38" x2="110" y2="68" stroke="#085041" stroke-width="2.5" stroke-linecap="round"/><rect x="36" y="64" width="88" height="8" rx="4" fill="#0F6E56" opacity="0.7"/><text x="90" y="92" text-anchor="middle" font-size="9" fill="#085041" font-family="sans-serif">Straight arm pulldown</text></svg>`},
+{n:"Lat raise machine",sets:3,reps:"10–15",mat:"Lateral raise machine",
+instr:"Zit in de machine, ellebogen op de pads op schouderhoogte. Hef je armen zijwaarts omhoog in een vloeiende boog. Houd je schouders actief omlaag — niet optrekken. Laat gecontroleerd zakken en herhaal.",
+svg:`<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><rect x="82" y="30" width="36" height="55" rx="6" fill="#B5D4F4"/><rect x="82" y="30" width="36" height="10" rx="5" fill="#185FA5"/><ellipse cx="100" cy="20" rx="13" ry="13" fill="#E6F1FB" stroke="#378ADD" stroke-width="2"/><ellipse cx="100" cy="18" rx="5" ry="4" fill="#B5D4F4"/><line x1="88" y1="28" x2="50" y2="50" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><line x1="112" y1="28" x2="150" y2="50" stroke="#0C447C" stroke-width="3" stroke-linecap="round"/><rect x="30" y="46" width="24" height="10" rx="4" fill="#378ADD"/><rect x="24" y="48" width="10" height="6" rx="2" fill="#0C447C"/><rect x="146" y="46" width="24" height="10" rx="4" fill="#378ADD"/><rect x="166" y="48" width="10" height="6" rx="2" fill="#0C447C"/><line x1="100" y1="40" x2="100" y2="85" stroke="#0C447C" stroke-width="2.5" stroke-linecap="round"/><text x="100" y="98" text-anchor="middle" font-size="9" fill="#185FA5" font-family="sans-serif">Lat raise machine</text></svg>`},
+{n:"Overhead cable extension",sets:3,reps:"10–15",mat:"Kabelstation",
+instr:"Sta met je rug naar het kabelstation. Grijp het touw boven je hoofd. Houd je ellebogen hoog en stil naast je hoofd. Strek je armen volledig naar voren. Laat gecontroleerd terug buigen. Alleen de onderarmen bewegen.",
+svg:`<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><rect x="155" y="5" width="30" height="90" rx="6" fill="#9FE1CB" opacity="0.5"/><rect x="155" y="5" width="30" height="8" rx="4" fill="#0F6E56"/><line x1="155" y1="16" x2="120" y2="24" stroke="#085041" stroke-width="2" stroke-linecap="round"/><rect x="106" y="20" width="18" height="8" rx="4" fill="#1D9E75"/><ellipse cx="72" cy="38" rx="13" ry="13" fill="#E1F5EE" stroke="#1D9E75" stroke-width="2"/><ellipse cx="72" cy="36" rx="5" ry="4" fill="#9FE1CB"/><line x1="72" y1="51" x2="72" y2="68" stroke="#085041" stroke-width="3" stroke-linecap="round"/><line x1="62" y1="33" x2="56" y2="22" stroke="#085041" stroke-width="2.5" stroke-linecap="round"/><line x1="82" y1="33" x2="108" y2="24" stroke="#085041" stroke-width="2.5" stroke-linecap="round"/><line x1="56" y1="22" x2="30" y2="40" stroke="#085041" stroke-width="2.5" stroke-linecap="round"/><rect x="18" y="36" width="26" height="8" rx="4" fill="#0F6E56" opacity="0.7"/><line x1="72" y1="68" x2="60" y2="88" stroke="#085041" stroke-width="2.5" stroke-linecap="round"/><line x1="72" y1="68" x2="84" y2="88" stroke="#085041" stroke-width="2.5" stroke-linecap="round"/><text x="90" y="98" text-anchor="middle" font-size="9" fill="#085041" font-family="sans-serif">Overhead cable ext.</text></svg>`}
+]};
+
+const KEY_PREFIX='ft_';
+let dag=0;
+const mem={};
+
+function sk(d,e,s,f){return KEY_PREFIX+'d'+d+'_e'+e+'_s'+s+'_'+f;}
+function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+
+function getVal(d,e,s,f){return mem[sk(d,e,s,f)]||lsGet(sk(d,e,s,f))||'';}
+function setVal(d,e,s,f,v){mem[sk(d,e,s,f)]=v;lsSet(sk(d,e,s,f),v);}
+function isDone(d,e,s){return lsGet(sk(d,e,s,'done'))==='1';}
+
+function histKey(d,e){return KEY_PREFIX+'hist_d'+d+'_e'+e;}
+function getHist(d,e){try{return JSON.parse(lsGet(histKey(d,e))||'[]');}catch(x){return[];}}
+function saveHist(d,e,data){lsSet(histKey(d,e),JSON.stringify(data));}
+
+function recordSet(d,e,s,f,v){
+  setVal(d,e,s,f,v);
+  const today=new Date().toLocaleDateString('nl-NL');
+  const hist=getHist(d,e);
+  const idx=hist.findIndex(x=>x.date===today&&x.set===s);
+  const kg=f==='kg'?v:getVal(d,e,s,'kg');
+  const reps=f==='reps'?v:getVal(d,e,s,'reps');
+  if(idx>=0){hist[idx].kg=kg;hist[idx].reps=reps;}
+  else hist.push({date:today,set:s,kg,reps,done:isDone(d,e,s)});
+  saveHist(d,e,hist);
+}
+
+function recordDone(d,e,s,val){
+  lsSet(sk(d,e,s,'done'),val?'1':'0');
+  const today=new Date().toLocaleDateString('nl-NL');
+  const hist=getHist(d,e);
+  const idx=hist.findIndex(x=>x.date===today&&x.set===s);
+  if(idx>=0)hist[idx].done=val;
+  else hist.push({date:today,set:s,kg:getVal(d,e,s,'kg'),reps:getVal(d,e,s,'reps'),done:val});
+  saveHist(d,e,hist);
+}
+
+function getBench(d,e){
+  const hist=getHist(d,e);
+  const today=new Date().toLocaleDateString('nl-NL');
+  const dates=[...new Set(hist.map(x=>x.date))].filter(dt=>dt!==today).sort();
+  if(!dates.length)return null;
+  const last=dates[dates.length-1];
+  return{date:last,entries:hist.filter(x=>x.date===last)};
+}
+
+function pct(sk){
+  const o=SCHEMA[sk];if(!o)return 0;
+  let t=0,g=0;
+  o.forEach((ex,i)=>{for(let s=0;s<ex.sets;s++){t++;if(isDone(sk,i,s))g++;}});
+  return t?Math.round(g/t*100):0;
+}
+
+function toggleEx(i){
+  const b=document.getElementById('eb'+i),c=document.getElementById('ec'+i);
+  const open=b.classList.contains('open');
+  document.querySelectorAll('.ex-body').forEach(x=>x.classList.remove('open'));
+  document.querySelectorAll('.chev').forEach(x=>x.classList.remove('open'));
+  if(!open){b.classList.add('open');c.classList.add('open');}
+}
+
+function toggleDone(d,e,s){
+  const was=isDone(d,e,s);
+  recordDone(d,e,s,!was);
+  const btn=document.getElementById('sc'+e+'-'+s);
+  if(btn){btn.className='s-check'+(!was?' on':'');btn.innerHTML=!was?'✓':'';}
+  const card=document.getElementById('exc'+e);
+  if(card){const all=SCHEMA[d][e]&&[...Array(SCHEMA[d][e].sets)].every((_,si)=>isDone(d,e,si));card.className='ex-card'+(all?' done':'');}
+  renderProg();
+}
+
+function renderProg(){
+  const pw=document.getElementById('pwrap');
+  const d=DAGEN[dag];
+  if(!d.t){pw.style.display='none';return;}
+  pw.style.display='block';
+  const p=pct(d.sk);
+  document.getElementById('ptyp').textContent=d.type;
+  document.getElementById('ppct').textContent=p+'%';
+  document.getElementById('pfill').style.width=p+'%';
+}
+
+function renderTabs(){
+  const w=document.getElementById('dtabs');w.innerHTML='';
+  DAGEN.forEach((d,i)=>{
+    const b=document.createElement('button');
+    b.className='day-tab'+(i===dag?' active':'')+(d.t?' training':'');
+    b.textContent=d.k;b.onclick=()=>{dag=i;render();};
+    w.appendChild(b);
+  });
+}
+
+function render(){
+  renderTabs();
+  const now=new Date();
+  document.getElementById('dlbl').textContent=now.toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short'});
+  const main=document.getElementById('main');
+  const d=DAGEN[dag];
+  if(!d.t){
+    document.getElementById('pwrap').style.display='none';
+    main.innerHTML=`<div class="rest-day"><div class="rest-icon">🌙</div><div class="rest-title">Rustdag</div><div class="rest-sub">Herstel is een essentieel onderdeel van training. Eet goed, slaap goed.</div></div>`;
+    return;
+  }
+  renderProg();
+  const oefs=SCHEMA[d.sk];
+  let html='<div class="ex-list">';
+  oefs.forEach((o,i)=>{
+    const allDone=[...Array(o.sets)].every((_,s)=>isDone(d.sk,i,s));
+    const bench=getBench(d.sk,i);
+    let benchHtml='';
+    if(bench){
+      const sets=bench.entries.filter(x=>x.kg||x.reps);
+      if(sets.length){
+        const sum=sets.map(x=>`s${x.set+1}: ${x.kg||'–'}kg×${x.reps||'–'}`).join(' · ');
+        benchHtml=`<div class="ex-bench">⏱ ${bench.date}: ${sum}</div>`;
+      }
+    }
+    html+=`<div class="ex-card${allDone?' done':''}" id="exc${i}">
+      <div class="ex-head" onclick="toggleEx(${i})">
+        <div class="ex-thumb">${o.svg}</div>
+        <div class="ex-info">
+          <div class="ex-name">${o.n}</div>
+          <div class="ex-meta">${o.sets} sets · ${o.reps} reps · ${o.mat}</div>
+          ${benchHtml}
+          ${allDone?'<div class="ex-done">✓ Voltooid</div>':''}
+        </div>
+        <span class="chev" id="ec${i}">›</span>
+      </div>
+      <div class="ex-body" id="eb${i}">
+        <div class="ex-visual">${o.svg}</div>
+        <div class="instr">${o.instr}</div>
+        <div class="sets-hdr"><span>#</span><span>Gewicht (kg)</span><span>Herhalingen</span><span></span></div>`;
+    for(let s=0;s<o.sets;s++){
+      const done=isDone(d.sk,i,s);
+      const kg=getVal(d.sk,i,s,'kg');
+      const reps=getVal(d.sk,i,s,'reps');
+      const b=getBench(d.sk,i);
+      const bs=b?b.entries.find(x=>x.set===s):null;
+      html+=`<div class="set-row">
+        <div class="set-num">${s+1}</div>
+        <input class="s-input${kg?' filled':''}" type="number" inputmode="decimal" min="0" step="0.5" placeholder="${bs&&bs.kg?bs.kg+'kg':'–'}" value="${kg}" oninput="recordSet(${d.sk},${i},${s},'kg',this.value);this.classList.toggle('filled',!!this.value)" aria-label="Gewicht set ${s+1}">
+        <input class="s-input${reps?' filled':''}" type="number" inputmode="numeric" min="0" step="1" placeholder="${bs&&bs.reps?bs.reps+'×':'–'}" value="${reps}" oninput="recordSet(${d.sk},${i},${s},'reps',this.value);this.classList.toggle('filled',!!this.value)" aria-label="Reps set ${s+1}">
+        <button class="s-check${done?' on':''}" id="sc${i}-${s}" onclick="toggleDone(${d.sk},${i},${s})" aria-label="Set afvinken">${done?'✓':''}</button>
+      </div>`;
+    }
+    if(bench&&bench.entries.length){
+      html+=`<div class="hist-block"><div class="hist-lbl">📅 Vorige training (${bench.date})</div>`;
+      bench.entries.filter(x=>x.kg||x.reps).forEach(x=>{
+        html+=`<div class="hist-row"><span>Set ${x.set+1}: ${x.kg||'–'} kg × ${x.reps||'–'} reps</span><span class="hist-done">${x.done?'✓':''}</span></div>`;
+      });
+      html+='</div>';
+    }
+    html+='</div></div>';
+  });
+  html+='</div>';
+  main.innerHTML=html;
+}
+
+const today=new Date().getDay();
+const map={1:0,3:2,6:5};
+dag=map[today]!==undefined?[0,2,4,6].includes(today)?0:map[today]||0:0;
+if(map[today]!==undefined)dag=[0,1,2,3,4,5,6].indexOf(today);
+dag=today===1?0:today===3?2:today===6?5:0;
+render();
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>

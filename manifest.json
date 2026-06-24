@@ -1,0 +1,18 @@
+{
+  "name": "Mijn Training",
+  "short_name": "Training",
+  "description": "Persoonlijke fitness tracker",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0C447C",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
