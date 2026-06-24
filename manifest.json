@@ -2,7 +2,7 @@
   "name": "Mijn Training",
   "short_name": "Training",
   "description": "Persoonlijke fitness tracker",
-  "start_url": "/",
+  "start_url": "/fitness-app/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0C447C",
